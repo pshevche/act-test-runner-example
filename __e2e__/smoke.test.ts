@@ -17,8 +17,10 @@ afterEach(() => {
   mockServer.reset()
 })
 
+const isCI = process.env.CI === 'true'
+
 function actRunner(eventPayloadFileName: string): ActRunner {
-  const apiUrl = `http://host.docker.internal:${mockServer.getPort()}`
+  const hostname = isCI ? 'localhost' : 'host.docker.internal'
   const workflowFile = resourcePath('resources/workflow.yml')
   const eventPayloadFile = resourcePath(`resources/${eventPayloadFileName}`)
 
@@ -26,7 +28,10 @@ function actRunner(eventPayloadFileName: string): ActRunner {
     .withWorkflowFile(workflowFile)
     .withEvent('issue_comment', eventPayloadFile)
     .withInputsValues(['github-token', 'fake-token'])
-    .withEnvValues(['GITHUB_API_URL', apiUrl])
+    .withEnvValues([
+      'GITHUB_API_URL',
+      `http://${hostname}:${mockServer.getPort()}`
+    ])
     .forwardOutput()
 }
 
