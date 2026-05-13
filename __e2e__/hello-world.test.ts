@@ -15,6 +15,7 @@ jobs:
       - run: echo "Hello, World!"
     `
     )
+    .forwardOutput()
     .run()
 
   expect(result.status).toBe(ActExecStatus.SUCCESS)
