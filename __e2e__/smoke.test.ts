@@ -1,7 +1,8 @@
 import { test, expect, beforeAll, afterEach, afterAll } from '@jest/globals'
-import { ActRunner, ActExecStatus } from '@pshevche/act-test-runner'
+import { ActRunner } from '@pshevche/act-test-runner'
 import { resourcePath } from '../__fixtures__/resources'
 import { RequestCapturingGithubServer } from '../__fixtures__/github_mock_server'
+import { assertSuccess } from '../__fixtures__/assertions'
 
 const mockServer = new RequestCapturingGithubServer()
 
@@ -32,13 +33,12 @@ function actRunner(eventPayloadFileName: string): ActRunner {
       'GITHUB_API_URL',
       `http://${hostname}:${mockServer.getPort()}`
     ])
-    .forwardOutput()
 }
 
 test('echoes a comment on an issue', async () => {
   const result = await actRunner('issue-payload.json').run()
 
-  expect(result.status).toBe(ActExecStatus.SUCCESS)
+  assertSuccess(result)
   expect(mockServer.getRequests()).toHaveLength(1)
   expect(mockServer.getRequests()[0]).toEqual({
     body: '[ECHO > ISSUE] Test comment',
@@ -49,7 +49,7 @@ test('echoes a comment on an issue', async () => {
 test('echoes a comment on a pull request', async () => {
   const result = await actRunner('pr-payload.json').run()
 
-  expect(result.status).toBe(ActExecStatus.SUCCESS)
+  assertSuccess(result)
   expect(mockServer.getRequests()).toHaveLength(1)
   expect(mockServer.getRequests()[0]).toEqual({
     body: '[ECHO > PR] PR comment',
