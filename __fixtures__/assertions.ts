@@ -5,7 +5,12 @@ export function assertSuccess(result: ActWorkflowExecResult) {
     expect(result.status).toBe(ActExecStatus.SUCCESS)
   } catch (error) {
     throw new Error(
-      `Expected workflow to succeed, but got ${result.status}. Output: ${result.output}`,
+      `
+Expected workflow status: SUCCESS.
+Actual workflow status: ${ActExecStatus[result.status]}.
+Output: 
+${result.output}
+      `,
       { cause: error }
     )
   }
