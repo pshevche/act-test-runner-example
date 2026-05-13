@@ -26,6 +26,7 @@ function actRunner(eventPayloadFileName: string): ActRunner {
     .withWorkflowFile(workflowFile)
     .withEvent('issue_comment', eventPayloadFile)
     .withEnvValues(['GITHUB_API_URL', apiUrl])
+    .forwardOutput()
 }
 
 test('echoes a comment on an issue', async () => {
