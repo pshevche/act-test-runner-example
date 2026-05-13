@@ -54,7 +54,8 @@ export default [
             'jest.config.js',
             'jest.e2e.config.js',
             'rollup.config.ts'
-          ]
+          ],
+          maximumDefaultProjectFileMatchCount_THIS_WILL_SLOW_DOWN_LINTING: 50
         },
         tsconfigRootDir: import.meta.dirname
       }
