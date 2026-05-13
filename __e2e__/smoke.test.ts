@@ -19,8 +19,8 @@ afterEach(() => {
 
 function actRunner(eventPayloadFileName: string): ActRunner {
   const apiUrl = `http://host.docker.internal:${mockServer.getPort()}`
-  const workflowFile = resourcePath('workflow.yml')
-  const eventPayloadFile = resourcePath(eventPayloadFileName)
+  const workflowFile = resourcePath('resources/workflow.yml')
+  const eventPayloadFile = resourcePath(`resources/${eventPayloadFileName}`)
 
   return new ActRunner()
     .withWorkflowFile(workflowFile)
