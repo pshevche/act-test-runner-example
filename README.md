@@ -4,6 +4,8 @@
 
 An example GitHub Action demonstrating how [act-test-runner](https://github.com/pshevche/act-test-runner) can be used to implement end-to-end tests for GitHub Actions.
 
+This repository is based on the [actions/typescript-action](https://github.com/actions/typescript-action) template.
+
 ## The Action
 
 The action echoes comments posted on an issue or PR. When triggered by an `issue_comment` event, it posts a reply with the original comment prefixed by `[ECHO > ISSUE]` (for issue comments) or `[ECHO > PR]` (for PR comments).
