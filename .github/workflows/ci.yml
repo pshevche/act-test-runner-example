@@ -12,8 +12,8 @@ permissions:
   contents: read
 
 jobs:
-  test-typescript:
-    name: TypeScript Tests
+  lint-and-unit:
+    name: Lint & Unit Tests
     runs-on: ubuntu-latest
 
     steps:
@@ -40,12 +40,13 @@ jobs:
         id: npm-lint
         run: npm run lint
 
-      - name: Test
-        id: npm-ci-test
-        run: npm run ci-test
+      - name: Unit Tests
+        id: npm-unit-tests
+        run: npm run test:unit
 
-  test-action:
-    name: GitHub Actions Test
+  e2e:
+    name: E2E Tests
+    needs: lint-and-unit
     runs-on: ubuntu-latest
 
     steps:
@@ -53,12 +54,23 @@ jobs:
         id: checkout
         uses: actions/checkout@v6
 
-      - name: Test Local Action
-        id: test-action
-        uses: ./
+      - name: Setup Node.js
+        id: setup-node
+        uses: actions/setup-node@v6
         with:
-          milliseconds: 2000
+          node-version-file: .node-version
+          cache: npm
 
-      - name: Print Output
-        id: output
-        run: echo "${{ steps.test-action.outputs.time }}"
+      - name: Install Dependencies
+        id: npm-ci
+        run: npm ci
+
+      - name: Setup act
+        id: setup-act
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/nektos/act/master/install.sh | sudo bash -s -- -b "/usr/bin"
+          echo "-P ubuntu-latest=node:24-buster-slim" > $HOME/.actrc
+
+      - name: E2E Tests
+        id: npm-e2e-tests
+        run: npm run test:e2e

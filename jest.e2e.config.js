@@ -1,6 +1,3 @@
-// See: https://jestjs.io/docs/configuration
-
-/** @type {import('ts-jest').JestConfigWithTsJest} **/
 export default {
   clearMocks: true,
   extensionsToTreatAsEsm: ['.ts'],
@@ -9,8 +6,8 @@ export default {
   reporters: ['default'],
   resolver: 'ts-jest-resolver',
   testEnvironment: 'node',
-  testMatch: ['**/*.test.ts'],
-  testPathIgnorePatterns: ['/dist/', '/node_modules/', '/__e2e__/'],
+  testMatch: ['**/__e2e__/*.test.ts'],
+  testPathIgnorePatterns: ['/dist/', '/node_modules/'],
   transform: {
     '^.+\\.ts$': [
       'ts-jest',

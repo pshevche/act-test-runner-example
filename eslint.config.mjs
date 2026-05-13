@@ -47,10 +47,12 @@ export default [
       parserOptions: {
         projectService: {
           allowDefaultProject: [
+            '__e2e__/*.test.ts',
             '__fixtures__/*.ts',
             '__tests__/*.ts',
             'eslint.config.mjs',
             'jest.config.js',
+            'jest.e2e.config.js',
             'rollup.config.ts'
           ]
         },
