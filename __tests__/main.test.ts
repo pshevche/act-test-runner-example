@@ -1,62 +1,86 @@
-/**
- * Unit tests for the action's main functionality, src/main.ts
- *
- * To mock dependencies in ESM, you can create fixtures that export mock
- * functions and objects. For example, the core module is mocked in this test,
- * so that the actual '@actions/core' module is not imported.
- */
 import { jest } from '@jest/globals'
 import * as core from '../__fixtures__/core.js'
-import { wait } from '../__fixtures__/wait.js'
+import * as github from '../__fixtures__/github.js'
 
-// Mocks should be declared before the module being tested is imported.
 jest.unstable_mockModule('@actions/core', () => core)
-jest.unstable_mockModule('../src/wait.js', () => ({ wait }))
+jest.unstable_mockModule('@actions/github', () => github)
 
-// The module being tested should be imported dynamically. This ensures that the
-// mocks are used in place of any actual dependencies.
 const { run } = await import('../src/main.js')
 
 describe('main.ts', () => {
   beforeEach(() => {
-    // Set the action's inputs as return values from core.getInput().
-    core.getInput.mockImplementation(() => '500')
-
-    // Mock the wait function so that it does not actually wait.
-    wait.mockImplementation(() => Promise.resolve('done!'))
+    core.getInput.mockImplementation(() => 'fake-token')
+    github.getOctokit.mockImplementation(() => ({
+      rest: { issues: { createComment: jest.fn() } }
+    }))
+    github.context.payload.comment.body = 'Hello, world!'
+    github.context.payload.issue.number = 42
   })
 
   afterEach(() => {
     jest.resetAllMocks()
   })
 
-  it('Sets the time output', async () => {
+  it('Posts an echoed comment on an issue', async () => {
     await run()
 
-    // Verify the time output was set.
-    expect(core.setOutput).toHaveBeenNthCalledWith(
+    const octokit = github.getOctokit.mock.results[0].value
+    expect(octokit.rest.issues.createComment).toHaveBeenNthCalledWith(1, {
+      owner: 'owner',
+      repo: 'repo',
+      issue_number: 42,
+      body: '[ECHO > ISSUE] Hello, world!'
+    })
+    expect(core.info).toHaveBeenCalledWith('Echoed comment on ISSUE #42')
+  })
+
+  it('Posts an echoed comment on a pull request', async () => {
+    github.context.payload.issue.pull_request = {}
+
+    await run()
+
+    const octokit = github.getOctokit.mock.results[0].value
+    expect(octokit.rest.issues.createComment).toHaveBeenNthCalledWith(1, {
+      owner: 'owner',
+      repo: 'repo',
+      issue_number: 42,
+      body: '[ECHO > PR] Hello, world!'
+    })
+    expect(core.info).toHaveBeenCalledWith('Echoed comment on PR #42')
+  })
+
+  it('Warns if no comment body is present', async () => {
+    github.context.payload.comment.body = undefined
+
+    await run()
+
+    expect(core.warning).toHaveBeenNthCalledWith(
       1,
-      'time',
-      // Simple regex to match a time string in the format HH:MM:SS.
-      expect.stringMatching(/^\d{2}:\d{2}:\d{2}/)
+      'No comment body found in the event payload'
     )
   })
 
-  it('Sets a failed status', async () => {
-    // Clear the getInput mock and return an invalid value.
-    core.getInput.mockClear().mockReturnValueOnce('this is not a number')
-
-    // Clear the wait mock and return a rejected promise.
-    wait
-      .mockClear()
-      .mockRejectedValueOnce(new Error('milliseconds is not a number'))
+  it('Warns if no issue number is present', async () => {
+    github.context.payload.issue.number = undefined
 
     await run()
 
-    // Verify that the action was marked as failed.
+    expect(core.warning).toHaveBeenNthCalledWith(
+      1,
+      'No issue or PR number found in the event payload'
+    )
+  })
+
+  it('Sets a failed status on error', async () => {
+    core.getInput.mockImplementationOnce(() => {
+      throw new Error('Input required and not supplied: github-token')
+    })
+
+    await run()
+
     expect(core.setFailed).toHaveBeenNthCalledWith(
       1,
-      'milliseconds is not a number'
+      'Input required and not supplied: github-token'
     )
   })
 })

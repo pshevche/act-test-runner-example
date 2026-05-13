@@ -1,27 +1,38 @@
 import * as core from '@actions/core'
-import { wait } from './wait.js'
+import * as github from '@actions/github'
 
-/**
- * The main function for the action.
- *
- * @returns Resolves when the action is complete.
- */
 export async function run(): Promise<void> {
   try {
-    const ms: string = core.getInput('milliseconds')
+    const token = core.getInput('github-token', { required: true })
+    const octokit = github.getOctokit(token)
 
-    // Debug logs are only output if the `ACTIONS_STEP_DEBUG` secret is true
-    core.debug(`Waiting ${ms} milliseconds ...`)
+    const commentBody = github.context.payload.comment?.body
 
-    // Log the current timestamp, wait, then log the new timestamp
-    core.debug(new Date().toTimeString())
-    await wait(parseInt(ms, 10))
-    core.debug(new Date().toTimeString())
+    if (!commentBody) {
+      core.warning('No comment body found in the event payload')
+      return
+    }
 
-    // Set outputs for other workflow steps to use
-    core.setOutput('time', new Date().toTimeString())
+    const issue = github.context.payload.issue
+
+    if (!issue?.number) {
+      core.warning('No issue or PR number found in the event payload')
+      return
+    }
+
+    const prefix = issue.pull_request ? 'PR' : 'ISSUE'
+
+    await octokit.rest.issues.createComment({
+      owner: github.context.repo.owner,
+      repo: github.context.repo.repo,
+      issue_number: issue.number,
+      body: `[ECHO > ${prefix}] ${commentBody}`
+    })
+
+    core.info(`Echoed comment on ${prefix} #${issue.number}`)
   } catch (error) {
-    // Fail the workflow run if an error occurs
-    if (error instanceof Error) core.setFailed(error.message)
+    if (error instanceof Error) {
+      core.setFailed(error.message)
+    }
   }
 }
