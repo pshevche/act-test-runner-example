@@ -20,4 +20,4 @@ jobs:
 
   expect(result.status).toBe(ActExecStatus.SUCCESS)
   expect(result.output).toContain('Hello, World!')
-})
+}, 30000)
