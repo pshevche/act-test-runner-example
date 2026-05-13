@@ -70,6 +70,7 @@ jobs:
         run: |
           curl --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/nektos/act/master/install.sh | sudo bash -s -- -b "/usr/bin"
           echo "-P ubuntu-latest=node:24-slim" > "$HOME/.actrc"
+          echo "--network=host" >> "$HOME/.actrc"
 
       - name: E2E Tests
         id: npm-e2e-tests

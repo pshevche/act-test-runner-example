@@ -25,6 +25,7 @@ function actRunner(eventPayloadFileName: string): ActRunner {
   return new ActRunner()
     .withWorkflowFile(workflowFile)
     .withEvent('issue_comment', eventPayloadFile)
+    .withInputsValues(['github-token', 'fake-token'])
     .withEnvValues(['GITHUB_API_URL', apiUrl])
     .forwardOutput()
 }
