@@ -1,6 +1,5 @@
 # Create a GitHub Action Using TypeScript
 
-![Linter](https://github.com/pshevche/act-test-runner-example/actions/workflows/linter.yml/badge.svg)
 ![CI](https://github.com/pshevche/act-test-runner-example/actions/workflows/ci.yml/badge.svg)
 ![Check dist/](https://github.com/pshevche/act-test-runner-example/actions/workflows/check-dist.yml/badge.svg)
 ![CodeQL](https://github.com/pshevche/act-test-runner-example/actions/workflows/codeql-analysis.yml/badge.svg)
