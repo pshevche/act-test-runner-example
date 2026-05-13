@@ -2,9 +2,15 @@ import { test, expect, beforeAll, afterEach, afterAll } from '@jest/globals'
 import express from 'express'
 import type { Server } from 'node:http'
 import type { AddressInfo } from 'node:net'
-import { writeFileSync, mkdtempSync, rmSync } from 'node:fs'
-import { join } from 'node:path'
+import { resolve, dirname } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { ActRunner, ActExecStatus } from '@pshevche/act-test-runner'
+
+const __dirname = dirname(fileURLToPath(import.meta.url))
+
+const workflowFile = resolve(__dirname, 'workflow.yml')
+const issuePayload = resolve(__dirname, 'issue-payload.json')
+const prPayload = resolve(__dirname, 'pr-payload.json')
 
 interface CreateCommentRequest {
   body: string
@@ -46,44 +52,12 @@ afterEach(() => {
   capturedRequests.length = 0
 })
 
-function createPayload(
-  commentBody: string,
-  issueNumber: number,
-  isPR: boolean
-): string {
-  const issue: Record<string, unknown> = { number: issueNumber }
-  if (isPR) {
-    issue.pull_request = {}
-  }
-  return JSON.stringify({
-    action: 'created',
-    issue,
-    comment: { body: commentBody }
-  })
-}
-
 function buildRunner(payloadFile: string): ActRunner {
   const hostname = isLinux ? 'localhost' : 'host.docker.internal'
   const apiUrl = `http://${hostname}:${mockServerPort}`
 
   const runner = new ActRunner()
-    .withWorkflowBody(
-      `
-name: echo-comment-test
-on:
-  issue_comment:
-    types: [created]
-
-jobs:
-  echo-comment:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-      - uses: ./
-        with:
-          github-token: fake-token
-`
-    )
+    .withWorkflowFile(workflowFile)
     .withEvent('issue_comment', payloadFile)
     .withEnvValues(['GITHUB_API_URL', apiUrl])
     .forwardOutput()
@@ -96,13 +70,7 @@ jobs:
 }
 
 test('echoes a comment on an issue', async () => {
-  const tmpDir = mkdtempSync('payload-')
-  const payloadFile = join(tmpDir, 'payload.json')
-  writeFileSync(payloadFile, createPayload('Test comment', 42, false))
-
-  const result = await buildRunner(payloadFile).run()
-
-  rmSync(tmpDir, { recursive: true, force: true })
+  const result = await buildRunner(issuePayload).run()
 
   expect(result.status).toBe(ActExecStatus.SUCCESS)
   expect(capturedRequests).toHaveLength(1)
@@ -113,13 +81,7 @@ test('echoes a comment on an issue', async () => {
 }, 120000)
 
 test('echoes a comment on a pull request', async () => {
-  const tmpDir = mkdtempSync('payload-')
-  const payloadFile = join(tmpDir, 'payload.json')
-  writeFileSync(payloadFile, createPayload('PR comment', 7, true))
-
-  const result = await buildRunner(payloadFile).run()
-
-  rmSync(tmpDir, { recursive: true, force: true })
+  const result = await buildRunner(prPayload).run()
 
   expect(result.status).toBe(ActExecStatus.SUCCESS)
   expect(capturedRequests).toHaveLength(1)
